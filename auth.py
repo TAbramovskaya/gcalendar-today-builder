@@ -3,7 +3,9 @@ from __future__ import annotations
 import os
 from typing import Optional
 
+# noinspection PyPackageRequirements
 from google.oauth2.credentials import Credentials
+# noinspection PyPackageRequirements
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -28,7 +30,7 @@ def load_credentials(oauth_json: str, token_file: str, scopes: list[str], label:
                 success_message=f"✅ {label} account authorized successfully!"
             )
 
-        # Save new token
+        # Save a new token
         with open(token_file, "w") as token:
             token.write(creds.to_json())
 
