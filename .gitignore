@@ -1,0 +1,9 @@
+*.json
+*.pickle
+token_*.json
+credentials_*.json
+__pycache__/
+*.pyc
+venv/
+*.log
+.idea
