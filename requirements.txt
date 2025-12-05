@@ -1,3 +1,7 @@
 google-api-python-client
 google-auth-oauthlib
+google-auth
 python-dateutil
+
+# Recommended Python version
+# python>=3.11

@@ -4,7 +4,7 @@ from __future__ import annotations
 from config import CFG
 from auth import load_credentials, build_service
 from fetcher import fetch_upcoming_events
-from writer import build_target_event, insert_event, clear_target
+from writer import clear_target, write_events
 from logger import get_logger
 
 log = get_logger(__name__)
@@ -19,13 +19,9 @@ def main():
 
     events = fetch_upcoming_events(src_service, CFG.source_calendar_id, CFG.hours_ahead)
 
-    clear_target(tgt_service, CFG.target_calendar_id, CFG.hours_ahead)
+    clear_target(tgt_service, CFG.target_calendar_id, CFG.delete_past_days, CFG.hours_ahead)
 
-    log.info("Inserting events...")
-    for ev in events:
-        target_event = build_target_event(ev)
-        insert_event(tgt_service, CFG.target_calendar_id, target_event)
-    log.info("Finished.")
+    write_events(tgt_service, CFG.target_calendar_id, events, CFG.notification_minutes)
 
 
 if __name__ == "__main__":

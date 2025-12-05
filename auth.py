@@ -27,10 +27,9 @@ def load_credentials(oauth_json: str, token_file: str, scopes: list[str], label:
             creds = flow.run_local_server(
                 port=0,
                 authorization_prompt_message=f"🔑 Please authorize {label} account.",
-                success_message=f"✅ {label} account authorized successfully!"
+                success_message=f"{label} account authorized successfully!"
             )
 
-        # Save a new token
         with open(token_file, "w") as token:
             token.write(creds.to_json())
 

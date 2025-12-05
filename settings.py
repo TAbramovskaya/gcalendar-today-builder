@@ -1,0 +1,7 @@
+SOURCE_CALENDAR_ID = "primary"
+TARGET_CALENDAR_ID = "primary"
+
+DELETE_PAST_DAYS = 6
+HOURS_AHEAD = 48
+
+NOTIFICATION_MINUTES: tuple[int, ...] = (2, 10, )

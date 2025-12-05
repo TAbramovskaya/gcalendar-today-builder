@@ -5,23 +5,7 @@ from logger import get_logger
 log = get_logger(__name__)
 
 
-def attendee_count(ev):
-    attendees = ev.get("attendees", [])
-    statuses_to_count = {"accepted", "needsAction", None}
-
-    count = sum(a.get("responseStatus") in statuses_to_count for a in attendees)
-
-    organizer = ev.get("organizer", {})
-    if organizer.get("self"):
-        # But do not double count organizer if she/he is also in attendees
-        in_attendees = any(a.get("self") for a in attendees)
-        if not in_attendees:
-            count += 1
-
-    return count
-
-
-def build_target_event(ev):
+def build_target_event(ev, notification_minutes: tuple[int, ...]):
     summary = ev.get("summary", "")
     start = ev["start"]
     end = ev["end"]
@@ -29,8 +13,7 @@ def build_target_event(ev):
     reminders = {
         "useDefault": False,
         "overrides": [
-            {"method": "popup", "minutes": 10},
-            {"method": "popup", "minutes": 2},
+            {"method": "popup", "minutes": m} for m in notification_minutes
         ],
     }
 
@@ -50,12 +33,24 @@ def insert_event(service, calendar_id: str, event_body: dict):
     ).execute()
 
 
-def clear_target(service, calendar_id, hours: int):
-    tzinfo = tz.gettz("UTC")
-    now = dt.datetime.now(tzinfo)
-    end = now + dt.timedelta(hours=hours)
+def write_events(service, calendar_id: str, events: list[dict], notification_minutes: tuple[int, ...]):
+    log.info("Inserting events...")
+    for ev in events:
+        target_event = build_target_event(ev, notification_minutes)
+        insert_event(service, calendar_id, target_event)
+    log.info("Finished inserting events.")
 
-    time_min = now.isoformat()
+
+def clear_target(service, calendar_id: str, delete_past_days: int, hours: int):
+    tzinfo = tz.gettz("UTC")
+    today = dt.datetime.now(tzinfo).date()
+    today_midnight = dt.datetime.combine(today, dt.time.min, tzinfo)
+
+    # Clean from M days ago and until N hours after midnight
+    start = today_midnight - dt.timedelta(days=delete_past_days)
+    end = today_midnight + dt.timedelta(hours=hours)
+
+    time_min = start.isoformat()
     time_max = end.isoformat()
 
     events = service.events().list(
