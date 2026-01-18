@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from typing import Optional
 
+from google.auth.exceptions import RefreshError
 # noinspection PyPackageRequirements
 from google.oauth2.credentials import Credentials
 # noinspection PyPackageRequirements
@@ -21,19 +22,30 @@ def load_credentials(oauth_json: str, token_file: str, scopes: list[str], label:
     # If no valid credentials, perform OAuth login
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request())
+            except RefreshError as e:
+                try:
+                    os.remove(token_file)
+                except FileNotFoundError:
+                    pass
+                creds = _run_oauth_flow(oauth_json, scopes, label)
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(oauth_json, scopes)
-            creds = flow.run_local_server(
-                port=0,
-                authorization_prompt_message=f"🔑 Please authorize {label} account.",
-                success_message=f"{label} account authorized successfully!"
-            )
+            creds = _run_oauth_flow(oauth_json, scopes, label)
 
         with open(token_file, "w") as token:
             token.write(creds.to_json())
 
     return creds
+
+
+def _run_oauth_flow(oauth_json: str, scopes: list[str], label: str) -> Credentials:
+    flow = InstalledAppFlow.from_client_secrets_file(oauth_json, scopes)
+    return flow.run_local_server(
+                port=0,
+                authorization_prompt_message=f"🔑 Please authorize {label} account.",
+                success_message=f"{label} account authorized successfully!"
+            )
 
 
 def build_service(creds: Credentials):
